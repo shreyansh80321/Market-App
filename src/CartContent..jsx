@@ -13,7 +13,7 @@ export const CartProvider = ({ children }) => {
   })
 
   useEffect(() => {
-    localStorage.getItem('cart', JSON.stringify(cart));
+    localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart]);
   const addToCart = (item, quantity = 1) => {
     setCart(prevCart => {
@@ -48,7 +48,7 @@ export const CartProvider = ({ children }) => {
 
   const getCartTotal = () => cart.reduce((total, ci) => total + ci.price * ci.quantity, 0);
   
-  const cartCount = cart.reduce((cart, ci) => count + ci.quantity, 0);
+  const cartCount = cart.reduce((acc, ci) => acc + ci.quantity, 0);
   return (
     <CartContext.Provider value={{
       cart,

@@ -11,7 +11,7 @@ const BannerHome = ({ onSearch }) => {
   const handleSearch = (e) => setSearchTerm(e.target.value)
   const handleSubmit = (e) => {
     e.preventDefault();
-    const trimmed = setSearchTerm.trim();
+    const trimmedTerm = searchTerm.trim();
     if (trimmedTerm)
     {
       if (onSearch)
