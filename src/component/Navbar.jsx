@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {navbarStyles} from '../assets/dummyStyles'
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
@@ -22,15 +22,61 @@ const Navbar = () => {
   const { cartCount } = useCart();
     
   const [scrolled, setScrolled] = useState(false);
-  const [activeTab, setSctiveTab] = useState(location.pathname)
+  const [activeTab, setActiveTab] = useState(location.pathname)
   const [isOpen, setIsOpen] = useState(false);
   const [cartBounce, setCartBounce] = useState(false);
-  const prevCartCounter=useRef(cartCount)
+  const prevCartCountRef = useRef(cartCount);
    const [isLoggedIn, setIsLoggedIn] = useState(
      Boolean(localStorage.getItem("authToken"))
   );
 
-  const mobileMenuRef=useRef(null)
+  const mobileMenuRef = useRef(null)
+  useEffect(() => {
+    setActiveTab(location.pathname);
+    setIsOpen(false);
+  }, [location]);
+
+   useEffect(() => {
+     const handleScroll = () => setScrolled(window.scrollY > 20);
+     window.addEventListener("scroll", handleScroll);
+     return () => window.removeEventListener("scroll", handleScroll);
+   }, []);
+  
+    useEffect(() => {
+      if (cartCount > prevCartCountRef.current) {
+        setCartBounce(true);
+        const timer = setTimeout(() => setCartBounce(false), 1000);
+        return () => clearTimeout(timer);
+      }
+      prevCartCountRef.current = cartCount;
+    }, [cartCount]);
+  
+    useEffect(() => {
+      const handler = () => {
+        setIsLoggedIn(Boolean(localStorage.getItem("authToken")));
+      };
+      window.addEventListener("authStateChanged", handler);
+      return () => window.removeEventListener("authStateChanged", handler);
+    }, []);
+  
+     useEffect(() => {
+       const handleClickOutside = (event) => {
+         if (
+           isOpen &&
+           mobileMenuRef.current &&
+           !mobileMenuRef.current.contains(event.target)
+         ) {
+           setIsOpen(false);
+         }
+       };
+
+       document.addEventListener("mousedown", handleClickOutside);
+       return () => {
+         document.removeEventListener("mousedown", handleClickOutside);
+       };
+     }, [isOpen]);
+
+
    const handleLogout = () => {
      localStorage.removeItem("authToken");
      localStorage.removeItem("userData");
@@ -139,10 +185,107 @@ const Navbar = () => {
                 <span className={navbarStyles.cartBadge}>{cartCount}</span>
               )}
             </Link>
-            <button ></button>
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className={navbarStyles.hamburgerButton}
+              aria-label={isOpen ? "Close menu" : "Open menu"}
+            >
+              {isOpen ? (
+                <FiX className="h-6 w-6 text-white" />
+              ) : (
+                <FiMenu className="h-6 w-6 text-white" />
+              )}
+            </button>
           </div>
         </div>
       </div>
+      <div
+        className={`
+          ${navbarStyles.mobileOverlay}
+          ${
+            isOpen
+              ? "pointer-events-auto opacity-100"
+              : "pointer-events-none opacity-0"
+          }
+          fixed inset-0 z-40 bg-black bg-opacity-50 transition-opacity duration-300
+        `}
+        onClick={() => setIsOpen(false)}
+      >
+        <div
+          ref={mobileMenuRef}
+          className={`
+            ${navbarStyles.mobilePanel}
+            ${isOpen ? "translate-x-0" : "translate-x-full"}
+            fixed right-0 top-0 bottom-0 z-50 w-4/5 max-w-sm
+          `}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className={navbarStyles.mobileHeader}>
+            <div className={navbarStyles.mobileLogo}>
+              <div className={navbarStyles.mobileLogo}>
+                <img
+                  src={logo}
+                  alt="RushBasket Logo"
+                  className={navbarStyles.mobileLogoImage}
+                />
+                <span className={navbarStyles.mobileLogoText}>
+                  GrocceryBasket
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsOpen(false)}
+              className={navbarStyles.closeButton}
+              aria-label="Close menu"
+            >
+              <FiX className="h-6 w-6 text-white" />
+            </button>
+          </div>
+          <div className={navbarStyles.mobileItemsContainer}>
+            {navItems.map((item, idx) => (
+              <Link
+                key={item.name}
+                to={item.path}
+                className={navbarStyles.mobileItem}
+                style={{
+                  transitionDelay: isOpen ? `${idx * 100}ms` : "0ms",
+                  opacity: isOpen ? 1 : 0,
+                  transform: `translateX(${isOpen ? 0 : "20px"})`,
+                }}
+                onClick={() => setIsOpen(false)}
+              >
+                <span className={navbarStyles.mobileItemIcon}>{item.icon}</span>
+                <span className={navbarStyles.mobileItemText}>{item.name}</span>
+              </Link>
+            ))}
+            <div className={navbarStyles.mobileButtons}>
+              {isLoggedIn ? (
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setIsOpen(false);
+                  }}
+                  className={navbarStyles.loginButton}
+                >
+                  <FiUser className={navbarStyles.loginButtonIcon} />
+                  Logout
+                </button>
+              ) : (
+                <Link
+                  to="/login"
+                  className={navbarStyles.loginButton}
+                  onClick={() => setIsOpen(false)}
+                >
+                  <FiUser className={navbarStyles.loginButtonIcon} />
+                  Login
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <style>{navbarStyles.customCSS}</style>
     </nav>
   );
 }
