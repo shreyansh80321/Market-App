@@ -166,7 +166,7 @@ const ItemsHome = () => {
                       />
                       <div className={itemsHomeStyles.productContent}>
                         <h3 className={itemsHomeStyles.productTitle}>
-                        </h3>
+                          { product.name}</h3>
                         <div className={itemsHomeStyles.priceContainer}>
                           <div>
                             <p className={itemsHomeStyles.currentPrice}>
@@ -231,3 +231,5 @@ const ItemsHome = () => {
 }
 
 export default ItemsHome;
+
+
